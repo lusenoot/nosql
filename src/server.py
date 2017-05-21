@@ -59,7 +59,7 @@ def main():
 
         print("command = [{0}, {1}, {2}, {3}, {4}]".format(command, key, value, valuetype, dbid))
 
-        if command in (COMMAND_PUT, COMMAND_PLIST):
+        if command in (COMMAND_SET, COMMAND_PLIST):
             flag, code, response = NOSQL_COMMANDS[command]["func"](key, value, valuetype, dbid)
         elif command in (COMMAND_GET, COMMAND_DELETE):
             flag, code, response = NOSQL_COMMANDS[command]["func"](key, dbid)

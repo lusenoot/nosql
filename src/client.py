@@ -14,11 +14,11 @@ def __parse_args():
     subparsers = parser.add_subparsers(dest="command", metavar="command")
     subparsers.required = True
 
-    put_parser = subparsers.add_parser("put", help="put Key-Value to db [dbid = 0]")
-    put_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="kv params splited by \";\"")
+    set_parser = subparsers.add_parser("set", help="set Key-Value to db [dbid = 0]")
+    set_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="kv params splited by \";\"")
 
     plist_parser = subparsers.add_parser("plist",
-            help="put Key-Value(Value splited by \",\") to db [dbid = 0]")
+            help="set Key-Value(Value splited by \",\") to db [dbid = 0]")
     plist_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="kv params splited by \";\"")
 
     get_parser = subparsers.add_parser("get", help="get Value from db by Key [dbid = 0]")
@@ -64,7 +64,7 @@ def __parse_dbid(kvargs, limited):
 def main():
     args = __parse_args()
 
-    if args.command in ("put", "plist"):
+    if args.command in ("set", "plist"):
         if len(args.kvargs) < 2:
             print("params error, need Key Value at least")
             sys.exit(1)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-COMMAND_PUT = "put"
+COMMAND_SET = "set"
 COMMAND_PLIST = "plist"
 COMMAND_GET = "get"
 COMMAND_DELETE = "delete"

@@ -18,7 +18,7 @@ def __validate_vt(valuetype):
 
     return None
 
-def handle_put(key, value, valuetype=VT_STRING, dbid=-1):
+def handle_set(key, value, valuetype=VT_STRING, dbid=-1):
     if key is None:
         return False, ERR_INVALIDKEY, None
 
@@ -48,7 +48,7 @@ def handle_put(key, value, valuetype=VT_STRING, dbid=-1):
     return True, SUCCESS, databases[dbid][key]
 
 def handle_plist(key, value, valuetype=VT_LIST, dbid=-1):
-    return handle_put(key, value, valuetype, dbid)
+    return handle_set(key, value, valuetype, dbid)
 
 def handle_get(key, dbid=-1):
     if key is None:
@@ -102,7 +102,7 @@ def handle_keys(dbid=-1):
     return True, SUCCESS, keys
 
 NOSQL_COMMANDS = { 
-    COMMAND_PUT: {"func": handle_put, "needparam": 2, "isquery": 0}, 
+    COMMAND_SET: {"func": handle_set, "needparam": 2, "isquery": 0}, 
     COMMAND_PLIST: {"func": handle_plist, "needparam": 2, "isquery": 0}, 
     COMMAND_GET: {"func": handle_get, "needparam": 1, "isquery": 1}, 
     COMMAND_DELETE: {"func": handle_delete, "needparam": 1, "isquery": 0}, 
