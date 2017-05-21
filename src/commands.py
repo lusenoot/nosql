@@ -60,6 +60,8 @@ def handle_delete(key, dbid=-1):
     return True, SUCCESS, databases[dbid].pop(key)
 
 def handle_select(dbid=-1):
+    global curr_dbid
+
     if dbid == -1:
         dbid = curr_dbid
 
