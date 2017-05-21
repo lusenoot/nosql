@@ -13,10 +13,12 @@ def __validate_vt(valuetype):
         return VT_NUMBER
     elif valuetype == VT_STRING:
         return VT_STRING
+    elif valuetype == VT_LIST:
+        return VT_LIST
 
     return None
 
-def handle_put(key, value, valuetype="string", dbid=-1):
+def handle_put(key, value, valuetype=VT_STRING, dbid=-1):
     if key is None:
         return False, ERR_INVALIDKEY, None
 
@@ -31,8 +33,22 @@ def handle_put(key, value, valuetype="string", dbid=-1):
 
     if valuetype == VT_NUMBER or valuetype == VT_STRING:
         databases[dbid][key] = value
+    elif valuetype == VT_LIST:
+        try:
+            values = map(lambda val: val.strip(), value.strip().split(","))
+        except ValueError:
+            return False, ERR_INVALIDVALUE, None
 
-    return True, SUCCESS, value
+        if key not in databases[dbid]:
+            databases[dbid][key] = values
+        else:
+            for val in values:
+                databases[dbid][key].append(val)
+
+    return True, SUCCESS, databases[dbid][key]
+
+def handle_plist(key, value, valuetype=VT_LIST, dbid=-1):
+    return handle_put(key, value, valuetype, dbid)
 
 def handle_get(key, dbid=-1):
     if key is None:
@@ -87,6 +103,7 @@ def handle_keys(dbid=-1):
 
 NOSQL_COMMANDS = { 
     COMMAND_PUT: {"func": handle_put, "needparam": 2, "isquery": 0}, 
+    COMMAND_PLIST: {"func": handle_plist, "needparam": 2, "isquery": 0}, 
     COMMAND_GET: {"func": handle_get, "needparam": 1, "isquery": 1}, 
     COMMAND_DELETE: {"func": handle_delete, "needparam": 1, "isquery": 0}, 
     COMMAND_SELECT: {"func": handle_select, "needparam": 1, "isquery": 1}, 

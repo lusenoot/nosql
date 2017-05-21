@@ -19,22 +19,21 @@ def parse_message(data):
         return None, None, None, None, None
 
     try:
-        values = data.strip().split(';')
+        values = map(lambda val: val.strip(), data.strip().split(';'))
     except Exception as e:
-        print(e)
         print("Invalid input!, Excpted: command; [key]; [value]; [valuetype]; [dbid]")
         return None, None, None, None, None
 
     if len(values) == 4:
-        return values[0].strip().lower(), values[1].strip(), values[2].strip(), values[3].strip().lower(), -1
+        return values[0].lower(), values[1], values[2], values[3].lower(), -1
     elif len(values) == 2:
-        return values[0].strip().lower(), values[1].strip(), None, None, -1
+        return values[0].lower(), values[1], None, None, -1
     elif len(values) == 3:
-        return values[0].strip().lower(), values[1].strip(), values[2].strip(), VT_STRING, -1
+        return values[0].lower(), values[1], values[2], VT_STRING, -1
     elif len(values) >= 5:
-        return values[0].strip().lower(), values[1].strip(), values[2].strip(), values[3].strip(), int(values[4].strip())
+        return values[0].lower(), values[1], values[2], values[3], int(values[4])
     elif len(values) == 1:
-        return values[0].strip().lower(), None, None, None, -1
+        return values[0].lower(), None, None, None, -1
 
     print("Invalid input!, Excpted: command; [key]; [value]; [valuetype]; [dbid]")
     return None, None, None, None, None
@@ -60,7 +59,7 @@ def main():
 
         print("command = [{0}, {1}, {2}, {3}, {4}]".format(command, key, value, valuetype, dbid))
 
-        if command in (COMMAND_PUT):
+        if command in (COMMAND_PUT, COMMAND_PLIST):
             flag, code, response = NOSQL_COMMANDS[command]["func"](key, value, valuetype, dbid)
         elif command in (COMMAND_GET, COMMAND_DELETE):
             flag, code, response = NOSQL_COMMANDS[command]["func"](key, dbid)

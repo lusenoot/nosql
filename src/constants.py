@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 COMMAND_PUT = "put"
+COMMAND_PLIST = "plist"
 COMMAND_GET = "get"
 COMMAND_DELETE = "delete"
 COMMAND_SELECT = "select"
@@ -8,6 +9,7 @@ COMMAND_KEYS = "keys"
 
 VT_NUMBER = "number"
 VT_STRING = "string"
+VT_LIST = "list"
 
 SUCCESS = 0
 ERR_NODATABASE = 1
