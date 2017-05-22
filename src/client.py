@@ -101,6 +101,8 @@ def main():
     data = socks.recv(4096)
     print data.decode("utf-8")
 
+    socks.close()
+
 if __name__ == '__main__':
     main()
 
