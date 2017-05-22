@@ -17,21 +17,21 @@ def __parse_args():
     subparsers.required = True
 
     set_parser = subparsers.add_parser(COMMAND_SET, help="set Key-Value to db [dbid = 0]")
-    set_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="kv params splited by \";\"")
+    set_parser.add_argument("kvargs", nargs="+", metavar="kvargs")
 
     get_parser = subparsers.add_parser(COMMAND_GET, help="get Value from db by Key [dbid = 0]")
-    get_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="key params splited by \";\"")
+    get_parser.add_argument("kvargs", nargs="+", metavar="kvargs")
 
     lpush_parser = subparsers.add_parser(COMMAND_LPUSH,
             help="set Key-Value(Value splited by \",\") to db [dbid = 0]")
-    lpush_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="kv params splited by \";\"")
+    lpush_parser.add_argument("kvargs", nargs="+", metavar="kvargs")
 
     lpop_parser = subparsers.add_parser(COMMAND_LPOP,
             help="get first Value to list by Key [dbid = 0]")
-    lpop_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="key params splited by \";\"")
+    lpop_parser.add_argument("kvargs", nargs="+", metavar="kvargs")
 
     delete_parser = subparsers.add_parser(COMMAND_DELETE, help="delete Key-Value from db by Key [dbid = 0]")
-    delete_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="key params splited by \";\"")
+    delete_parser.add_argument("kvargs", nargs="+", metavar="kvargs")
 
     select_parser = subparsers.add_parser(COMMAND_SELECT, help="switch db by dbid")
     select_parser.add_argument("kvargs", nargs="?", metavar="kvargs", help="user dbid")
