@@ -5,6 +5,8 @@ import argparse
 import unicodedata
 import sys
 
+from constants import *
+
 def __parse_args():
     parser = argparse.ArgumentParser()
 
@@ -14,23 +16,27 @@ def __parse_args():
     subparsers = parser.add_subparsers(dest="command", metavar="command")
     subparsers.required = True
 
-    set_parser = subparsers.add_parser("set", help="set Key-Value to db [dbid = 0]")
+    set_parser = subparsers.add_parser(COMMAND_SET, help="set Key-Value to db [dbid = 0]")
     set_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="kv params splited by \";\"")
 
-    plist_parser = subparsers.add_parser("plist",
-            help="set Key-Value(Value splited by \",\") to db [dbid = 0]")
-    plist_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="kv params splited by \";\"")
-
-    get_parser = subparsers.add_parser("get", help="get Value from db by Key [dbid = 0]")
+    get_parser = subparsers.add_parser(COMMAND_GET, help="get Value from db by Key [dbid = 0]")
     get_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="key params splited by \";\"")
 
-    delete_parser = subparsers.add_parser("delete", help="delete Key-Value from db by Key [dbid = 0]")
+    lpush_parser = subparsers.add_parser(COMMAND_LPUSH,
+            help="set Key-Value(Value splited by \",\") to db [dbid = 0]")
+    lpush_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="kv params splited by \";\"")
+
+    lpop_parser = subparsers.add_parser(COMMAND_LPOP,
+            help="get first Value to list by Key [dbid = 0]")
+    lpop_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="key params splited by \";\"")
+
+    delete_parser = subparsers.add_parser(COMMAND_DELETE, help="delete Key-Value from db by Key [dbid = 0]")
     delete_parser.add_argument("kvargs", nargs="+", metavar="kvargs", help="key params splited by \";\"")
 
-    select_parser = subparsers.add_parser("select", help="switch db by dbid")
+    select_parser = subparsers.add_parser(COMMAND_SELECT, help="switch db by dbid")
     select_parser.add_argument("kvargs", nargs="?", metavar="kvargs", help="user dbid")
 
-    keys_parser = subparsers.add_parser("keys", help="list all keys by dbid")
+    keys_parser = subparsers.add_parser(COMMAND_KEYS, help="list all keys by dbid")
     keys_parser.add_argument("kvargs", nargs="?", metavar="kvargs", help="user dbid")
 
     return parser.parse_args()
@@ -64,31 +70,31 @@ def __parse_dbid(kvargs, limited):
 def main():
     args = __parse_args()
 
-    if args.command in ("set", "plist"):
+    if args.command in (COMMAND_SET, COMMAND_LPUSH):
         if len(args.kvargs) < 2:
             print("params error, need Key Value at least")
             sys.exit(1)
 
-        valuetype = "string"
+        valuetype = VT_STRING
         if args.kvargs[1] is not None:
             if is_number(args.kvargs[1]):
-                valuetype = "number"
+                valuetype = VT_NUMBER 
             elif "," in args.kvargs[1]:
-                valuetype = "list"
+                valuetype = VT_LIST
 
-        if args.command == "plist":
-            valuetype = "list"
+        if args.command == COMMAND_LPUSH:
+            valuetype = VT_LIST
 
         dbid = __parse_dbid(args.kvargs, 3)
         data = u"{0}; {1}; {2}; {3}; {4}".format(args.command, args.kvargs[0], args.kvargs[1], valuetype, dbid)
-    elif args.command in ("get", "delete"):
+    elif args.command in (COMMAND_GET, COMMAND_LPOP, COMMAND_DELETE):
         if len(args.kvargs) < 1:
             print("params error, need Key at least")
             sys.exit(1)
 
         dbid = __parse_dbid(args.kvargs, 2)
         data = u"{0}; {1}; {2}".format(args.command, args.kvargs[0], dbid)
-    elif args.command in ("select", "keys"):
+    elif args.command in (COMMAND_SELECT, COMMAND_KEYS):
         dbid = __parse_dbid(args.kvargs, 1)
         data = u"{0}; {1}".format(args.command, dbid)
     else:

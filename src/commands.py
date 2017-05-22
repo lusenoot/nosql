@@ -42,13 +42,13 @@ def handle_set(key, value, valuetype=VT_STRING, dbid=-1):
         if key not in databases[dbid]:
             databases[dbid][key] = values
         else:
+            if not isinstance(databases[dbid][key], list):
+                return False, ERR_INVALIDVALUETYPE, None
+
             for val in values:
                 databases[dbid][key].append(val)
 
     return True, SUCCESS, databases[dbid][key]
-
-def handle_plist(key, value, valuetype=VT_LIST, dbid=-1):
-    return handle_set(key, value, valuetype, dbid)
 
 def handle_get(key, dbid=-1):
     if key is None:
@@ -64,6 +64,30 @@ def handle_get(key, dbid=-1):
         return False, ERR_NOKEY, None
 
     return True, SUCCESS, databases[dbid][key]
+
+def handle_lpush(key, value, valuetype=VT_LIST, dbid=-1):
+    return handle_set(key, value, valuetype, dbid)
+
+def handle_lpop(key, dbid=-1):
+    if key is None:
+        return False, ERR_INVALIDKEY, None
+
+    if dbid == -1:
+        dbid = curr_dbid
+
+    if dbid not in databases:
+        return False, ERR_NODATABASE, None
+
+    if key not in databases[dbid]:
+        return False, ERR_NOKEY, None
+
+    values = databases[dbid][key]
+    if not isinstance(values, list):
+        return False, ERR_INVALIDVALUETYPE, None
+
+    value = values.pop(0) if len(values) > 0 else None
+
+    return True, SUCCESS, value
 
 def handle_delete(key, dbid=-1):
     flag, code, value = handle_get(key, dbid)
@@ -103,8 +127,9 @@ def handle_keys(dbid=-1):
 
 NOSQL_COMMANDS = { 
     COMMAND_SET: {"func": handle_set, "needparam": 2, "isquery": 0}, 
-    COMMAND_PLIST: {"func": handle_plist, "needparam": 2, "isquery": 0}, 
     COMMAND_GET: {"func": handle_get, "needparam": 1, "isquery": 1}, 
+    COMMAND_LPUSH: {"func": handle_lpush, "needparam": 2, "isquery": 0}, 
+    COMMAND_LPOP: {"func": handle_lpop, "needparam": 2, "isquery": 0}, 
     COMMAND_DELETE: {"func": handle_delete, "needparam": 1, "isquery": 0}, 
     COMMAND_SELECT: {"func": handle_select, "needparam": 1, "isquery": 1}, 
     COMMAND_KEYS: {"func": handle_keys, "needparam": 0, "isquery": 1}, 
