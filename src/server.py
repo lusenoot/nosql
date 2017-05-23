@@ -4,7 +4,7 @@ import time
 import socket
 import argparse
 
-from commands import NOSQL_COMMANDS
+from commands import NOSQL_COMMANDS, init_database
 from constants import *
 
 def __parse_args():
@@ -45,6 +45,8 @@ def main():
     socks.bind((args.ip, args.port))
     socks.listen(1024)
     socks.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+
+    init_database()
 
     while 1:
         conn, addr = socks.accept()

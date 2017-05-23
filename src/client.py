@@ -78,7 +78,7 @@ def main():
         valuetype = VT_STRING
         if args.kvargs[1] is not None:
             if is_number(args.kvargs[1]):
-                valuetype = VT_NUMBER 
+                valuetype = VT_NUMBER
             elif "," in args.kvargs[1]:
                 valuetype = VT_LIST
 
