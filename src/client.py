@@ -75,16 +75,24 @@ def process_args(args):
 
     return data
 
-def send_command(args, data):
-    socks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socks.connect((args.ip, args.port))
+def send_command(args, data, socks=None):
+    isnew = False
+    if not socks:
+        socks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socks.connect((args.ip, args.port))
+        isnew = True
+
     socks.send(data.encode("utf-8"))
 
     data = socks.recv(4096)
     print data.decode("utf-8")
-    socks.close()
+    if isnew:
+        socks.close()
 
 def process_cmdline(args):
+    socks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socks.connect((args.ip, args.port))
+
     while 1:
         args.command = None
         args.kvargs = None
@@ -94,9 +102,10 @@ def process_cmdline(args):
             continue
 
         args.command = commands.pop(0)
-        if args.command == "q" or args.command == "quit" or args.command == "exit" or args.command == "bye":
+        if args.command in ("q", "quit", "exit", "bye"):
+            socks.close()
             sys.exit(0)
-        elif args.command == "help" or args.command == "?":
+        elif args.command in ("help", "?"):
             parser.print_help()
             continue
 
@@ -104,7 +113,7 @@ def process_cmdline(args):
 
         data = process_args(args)
         if data:
-            send_command(args, data)
+            send_command(args, data, socks)
 
 def __parse_args():
     global parser

@@ -3,6 +3,8 @@
 import time
 import socket
 import argparse
+import select
+import errno
 
 from commands import NOSQL_COMMANDS, init_database
 from constants import *
@@ -13,6 +15,7 @@ def __parse_args():
     parser.add_argument("--port", "-p", help="Server listening port [default: 9527]", type=int, default=9527)
     parser.add_argument("--enauth", "-e", help="Enable auth password", action="store_true")
     parser.add_argument("--authpwd", "-a", help="Set server-end auth password", default=None)
+    parser.add_argument("--timeout", "-t", help="Set timeout to check client connections", default=10)
 
     return parser.parse_args()
 
@@ -40,6 +43,44 @@ def parse_message(data):
     print("Invalid input!, Excpted: command; [key]; [value]; [valuetype]; [dbid]")
     return None, None, None, None, None
 
+def process_client(client):
+    data = u""
+    while True:
+        try:
+            d = client["conn"].recv(4096).decode("utf-8")
+            if not d and not data:
+                return None
+            data += d
+        except socket.error as e:
+            if e.errno == errno.EAGAIN:
+                break
+            else:
+                print(e)
+                break
+
+    print("recv data [{0}]".format(data))
+    command, key, value, valuetype, dbid = parse_message(data)
+
+    if command not in NOSQL_COMMANDS:
+        client["message"] = NOSQL_ERRMSGS[ERR_INVALIDCMD]
+        return None
+
+    print("command = [{0}, {1}, {2}, {3}, {4}]".format(command, key, value, valuetype, dbid))
+
+    if command in (COMMAND_SET, COMMAND_LPUSH):
+        flag, code, response = NOSQL_COMMANDS[command]["func"](key, value, valuetype, dbid)
+    elif command in (COMMAND_GET, COMMAND_LPOP, COMMAND_DELETE):
+        flag, code, response = NOSQL_COMMANDS[command]["func"](key, dbid)
+    elif command in (COMMAND_SELECT, COMMAND_KEYS):
+        flag, code, response = NOSQL_COMMANDS[command]["func"](dbid)
+    elif command in (COMMAND_AUTH):
+        flag, code, response = NOSQL_COMMANDS[command]["func"](key)
+
+    client["message"] = NOSQL_ERRMSGS[code]
+    client["response"] = response
+
+    return data
+
 def main():
     args = __parse_args()
 
@@ -47,35 +88,60 @@ def main():
     socks.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
     socks.bind((args.ip, args.port))
     socks.listen(1024)
+    socks.setblocking(False)
 
+    # epoll register listen socket fd
+    epfd = select.epoll()
+    epfd.register(socks.fileno(), select.EPOLLIN)
+
+    # init database
     init_database(args.enauth, args.authpwd)
 
+    clients = {}
     while 1:
-        conn, addr = socks.accept()
-        print("{} new connection from {}".format(time.strftime(("%Y/%m/%d %H:%M:%S INFO"), time.localtime()), addr))
+        events = epfd.poll()
+        if not events:
+            continue
 
-        data = conn.recv(4096).decode("utf-8")
-        print("recv data [{0}]".format(data))
-        command, key, value, valuetype, dbid = parse_message(data)
+        print events
 
-        if command not in NOSQL_COMMANDS:
-            print(NOSQL_ERRMSGS[ERR_INVALIDCMD])
+        for fd, event in events:
+            if fd == socks.fileno():
+                conn, addr = socks.accept()
+                conn.setblocking(False)
 
-        print("command = [{0}, {1}, {2}, {3}, {4}]".format(command, key, value, valuetype, dbid))
+                epfd.register(conn.fileno(), select.EPOLLIN)
+                clients[conn.fileno()] = {}
+                clients[conn.fileno()]["conn"] = conn
+                clients[conn.fileno()]["message"] = u""
+                clients[conn.fileno()]["response"] = None
+                print("{} new connection from {}".format(time.strftime(("%Y/%m/%d %H:%M:%S INFO"), time.localtime()), addr))
+            elif event & select.EPOLLIN:
+                client = clients[fd]
+                if process_client(client):
+                    # continue to process send response
+                    epfd.modify(fd, select.EPOLLOUT)
+                else:
+                    epfd.unregister(fd)
+                    clients[fd]["conn"].close()
+                    del clients[fd]
+            elif event & select.EPOLLOUT:
+                client = clients[fd]
+                data = u"message: {0}\nresponse: {1}".format(client["message"], client["response"])
 
-        if command in (COMMAND_SET, COMMAND_LPUSH):
-            flag, code, response = NOSQL_COMMANDS[command]["func"](key, value, valuetype, dbid)
-        elif command in (COMMAND_GET, COMMAND_LPOP, COMMAND_DELETE):
-            flag, code, response = NOSQL_COMMANDS[command]["func"](key, dbid)
-        elif command in (COMMAND_SELECT, COMMAND_KEYS):
-            flag, code, response = NOSQL_COMMANDS[command]["func"](dbid)
-        elif command in (COMMAND_AUTH):
-            flag, code, response = NOSQL_COMMANDS[command]["func"](key)
+                data = bytearray(data, "utf-8")
+                sendlen = 0
+                while 1:
+                    sendlen += client["conn"].send(data[sendlen:])
+                    if sendlen == len(data):
+                        break
 
-        data = "message: {0}\nresponse: {1}".format(NOSQL_ERRMSGS[code], response)
-        conn.sendall(bytearray(data, 'utf-8'))
-        conn.close()
-        print(data)
+                # continue to read next request
+                epfd.modify(fd, select.EPOLLIN)
+            elif event & select.EPOLLHUP:
+                epfd.unregister(fd)
+                clients[fd]["conn"].close()
+                del clients[fd]
 
 if __name__ == "__main__":
     main()
