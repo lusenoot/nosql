@@ -65,6 +65,11 @@ def process_args(args):
     elif args.command in (COMMAND_SELECT, COMMAND_KEYS):
         dbid = __parse_dbid(args.kvargs, 1)
         data = u"{0}; {1}".format(args.command, dbid)
+    elif args.command in (COMMAND_AUTH):
+        if len(args.kvargs) < 1:
+            print("params error, no password input!!!")
+            return None
+        data = u"{0}; {1}".format(args.command, args.kvargs[0])
     else:
         print("Invalid command")
 
@@ -107,6 +112,7 @@ def __parse_args():
 
     parser.add_argument("--ip", help="Server listening IP address [default: 127.0.01]", default="127.0.0.1")
     parser.add_argument("--port", help="Server listening port [default: 9527]", type=int, default=9527)
+    parser.add_argument("--auth", help="Set password for connected database [default: None]", default=None)
 
     subparsers = parser.add_subparsers(dest="command", metavar="command")
     subparsers.required = True
@@ -133,6 +139,9 @@ def __parse_args():
 
     keys_parser = subparsers.add_parser(COMMAND_KEYS, help="list all keys by dbid")
     keys_parser.add_argument("kvargs", nargs="?", metavar="kvargs", help="user dbid")
+
+    auth_parser = subparsers.add_parser(COMMAND_AUTH, help="set password for connected database")
+    auth_parser.add_argument("kvargs", nargs="?", metavar="kvargs", help="set password")
 
     cmdline_parser = subparsers.add_parser("cmdline", help="Start cmdline mode")
     cmdline_parser.add_argument("kvargs", nargs="?", metavar="kvargs")

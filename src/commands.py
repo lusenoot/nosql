@@ -1,38 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from constants import *
-
-class Database:
-    def __init__(self, enauth=False, passwd=None):
-        self.__dbid__ = 0
-        self.__databases__ = {}
-        self.__enauth__ = enauth
-        self.__passwd__ = passwd
-
-    def getdbid(self):
-        return self.___dbid__
-
-    def setdbid(self, dbid):
-        if dbid in self.__databases__:
-            self.__dbid__ = dbid
-            return True
-
-        return False
-
-    def get_database(self, dbid, addnew=False):
-        if dbid == -1:
-            dbid = self.__dbid__
-
-        if dbid not in self.__databases__:
-            if addnew:
-                self.__databases__[dbid] = {}
-            else:
-                return None
-
-        return self.__databases__[dbid]
+from database import Database
 
 databases = None
-
 def init_database(enauth=False, passwd=None):
     global databases
     databases = Database(enauth, passwd)
@@ -140,6 +111,15 @@ def handle_keys(dbid=-1):
 
     return True, SUCCESS, keys
 
+def handle_auth(passwd):
+    if not databases.get_enauth():
+        return True, SUCCESS, None
+
+    if not passwd or passwd != databases.get_passwd():
+        return False, ERR_AUTHFAILED, None
+
+    return True, SUCCESS, None
+
 NOSQL_COMMANDS = {
     COMMAND_SET: {"func": handle_set, "needparam": 2, "isquery": 0},
     COMMAND_GET: {"func": handle_get, "needparam": 1, "isquery": 1},
@@ -148,7 +128,7 @@ NOSQL_COMMANDS = {
     COMMAND_DELETE: {"func": handle_delete, "needparam": 1, "isquery": 0},
     COMMAND_SELECT: {"func": handle_select, "needparam": 1, "isquery": 1},
     COMMAND_KEYS: {"func": handle_keys, "needparam": 0, "isquery": 1},
-    #COMMAND_AUTH: {"func": handle_auth, "needparam": 1, "isquery": 0},
+    COMMAND_AUTH: {"func": handle_auth, "needparam": 1, "isquery": 0},
 }
 
 

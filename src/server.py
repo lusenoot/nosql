@@ -69,6 +69,8 @@ def main():
             flag, code, response = NOSQL_COMMANDS[command]["func"](key, dbid)
         elif command in (COMMAND_SELECT, COMMAND_KEYS):
             flag, code, response = NOSQL_COMMANDS[command]["func"](dbid)
+        elif command in (COMMAND_AUTH):
+            flag, code, response = NOSQL_COMMANDS[command]["func"](key)
 
         data = "message: {0}\nresponse: {1}".format(NOSQL_ERRMSGS[code], response)
         conn.sendall(bytearray(data, 'utf-8'))
