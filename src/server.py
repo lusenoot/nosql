@@ -11,6 +11,8 @@ def __parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", "-i", help="Server listening IP address [default: 127.0.01]", default="127.0.0.1")
     parser.add_argument("--port", "-p", help="Server listening port [default: 9527]", type=int, default=9527)
+    parser.add_argument("--enauth", "-e", help="Enable auth password", action="store_true")
+    parser.add_argument("--authpwd", "-a", help="Set server-end auth password", default=None)
 
     return parser.parse_args()
 
@@ -42,11 +44,11 @@ def main():
     args = __parse_args()
 
     socks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socks.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
     socks.bind((args.ip, args.port))
     socks.listen(1024)
-    socks.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
 
-    init_database()
+    init_database(args.enauth, args.authpwd)
 
     while 1:
         conn, addr = socks.accept()
