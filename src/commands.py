@@ -6,7 +6,8 @@ from database import Database
 databases = None
 def init_database(enauth=False, passwd=None):
     global databases
-    databases = Database(enauth, passwd)
+    if not databases:
+        databases = Database(enauth, passwd)
 
 def __validate_vt(valuetype):
     if not valuetype:
