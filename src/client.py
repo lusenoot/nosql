@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import socket
+import errno
 import argparse
 import unicodedata
 import sys
@@ -76,15 +77,26 @@ def process_args(args):
     return data
 
 def send_command(args, data, socks=None):
-    isnew = False
-    if not socks:
-        socks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socks.connect((args.ip, args.port))
-        isnew = True
+    isnew = True if socks else False
 
-    socks.send(data.encode("utf-8"))
+    while True:
+        if not socks:
+            try:
+                socks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                socks.connect((args.ip, args.port))
+            except socket.error as e:
+                print("Cannot connect server({0}:{1})".format(args.ip, args.port))
+                return False
 
-    data = socks.recv(4096)
+        try:
+            socks.send(data.encode("utf-8"))
+            data = socks.recv(4096)
+            break
+        except socket.error as e:
+            socks.close()
+            socks = ""
+            continue
+
     print data.decode("utf-8")
     if isnew:
         socks.close()

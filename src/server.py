@@ -49,21 +49,21 @@ def process_client(client):
         try:
             d = client["conn"].recv(4096).decode("utf-8")
             if not d and not data:
-                return None
+                return False
             data += d
         except socket.error as e:
             if e.errno == errno.EAGAIN:
                 break
             else:
                 print(e)
-                break
+                return False
 
     print("recv data [{0}]".format(data))
     command, key, value, valuetype, dbid = parse_message(data)
 
     if command not in NOSQL_COMMANDS:
         client["message"] = NOSQL_ERRMSGS[ERR_INVALIDCMD]
-        return None
+        return True
 
     print("command = [{0}, {1}, {2}, {3}, {4}]".format(command, key, value, valuetype, dbid))
 
@@ -79,7 +79,7 @@ def process_client(client):
     client["message"] = NOSQL_ERRMSGS[code]
     client["response"] = response
 
-    return data
+    return True
 
 def main():
     args = __parse_args()
@@ -102,8 +102,6 @@ def main():
         events = epfd.poll()
         if not events:
             continue
-
-        print events
 
         for fd, event in events:
             if fd == socks.fileno():
