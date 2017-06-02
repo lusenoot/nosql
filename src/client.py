@@ -51,26 +51,26 @@ def process_args(args):
             elif "," in args.kvargs[1]:
                 valuetype = VT_LIST
 
-        if args.command == COMMAND_LPUSH:
+        if args.command in (COMMAND_LPUSH, COMMAND_LPOP):
             valuetype = VT_LIST
 
         dbid = __parse_dbid(args.kvargs, 3)
-        data = u"{0}; {1}; {2}; {3}; {4}".format(args.command, args.kvargs[0], args.kvargs[1], valuetype, dbid)
+        data = "{0}; {1}; {2}; {3}; {4}".format(args.command, args.kvargs[0], args.kvargs[1], valuetype, dbid)
     elif args.command in (COMMAND_GET, COMMAND_LPOP, COMMAND_DELETE):
         if len(args.kvargs) < 1:
             print("params error, need Key at least")
             return None
 
         dbid = __parse_dbid(args.kvargs, 2)
-        data = u"{0}; {1}; {2}".format(args.command, args.kvargs[0], dbid)
+        data = "{0}; {1}; {2}".format(args.command, args.kvargs[0], dbid)
     elif args.command in (COMMAND_SELECT, COMMAND_KEYS):
         dbid = __parse_dbid(args.kvargs, 1)
-        data = u"{0}; {1}".format(args.command, dbid)
+        data = "{0}; {1}".format(args.command, dbid)
     elif args.command in (COMMAND_AUTH):
         if len(args.kvargs) < 1:
             print("params error, no password input!!!")
             return None
-        data = u"{0}; {1}".format(args.command, args.kvargs[0])
+        data = "{0}; {1}".format(args.command, args.kvargs[0])
     else:
         print("Invalid command")
 
@@ -97,7 +97,7 @@ def send_command(args, data, socks=None):
             socks = ""
             continue
 
-    print data.decode("utf-8")
+    print(data.decode())
     if isnew:
         socks.close()
 
@@ -108,8 +108,8 @@ def process_cmdline(args):
     while 1:
         args.command = None
         args.kvargs = None
-        inputs = raw_input("cmdline> ")
-        commands = map(lambda val: val.strip(), inputs.strip().split())
+        inputs = input("cmdline> ")
+        commands = list(map(lambda val: val.strip(), inputs.strip().split()))
         if len(commands) == 0:
             continue
 

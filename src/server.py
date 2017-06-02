@@ -24,7 +24,7 @@ def parse_message(data):
         return None, None, None, None, None
 
     try:
-        values = map(lambda val: val.strip(), data.strip().split(';'))
+        values = list(map(lambda val: val.strip(), data.strip().split(';')))
     except Exception as e:
         print("Invalid input!, Excpted: command; [key]; [value]; [valuetype]; [dbid]")
         return None, None, None, None, None
@@ -44,7 +44,7 @@ def parse_message(data):
     return None, None, None, None, None
 
 def process_client(client):
-    data = u""
+    data = ""
     while True:
         try:
             d = client["conn"].recv(4096).decode("utf-8")
@@ -111,7 +111,7 @@ def main():
                 epfd.register(conn.fileno(), select.EPOLLIN)
                 clients[conn.fileno()] = {}
                 clients[conn.fileno()]["conn"] = conn
-                clients[conn.fileno()]["message"] = u""
+                clients[conn.fileno()]["message"] = ""
                 clients[conn.fileno()]["response"] = None
                 print("{} new connection from {}".format(time.strftime(("%Y/%m/%d %H:%M:%S INFO"), time.localtime()), addr))
             elif event & select.EPOLLIN:
@@ -125,7 +125,7 @@ def main():
                     del clients[fd]
             elif event & select.EPOLLOUT:
                 client = clients[fd]
-                data = u"message: {0}\nresponse: {1}".format(client["message"], client["response"])
+                data = "message: {0}\nresponse: {1}".format(client["message"], client["response"])
 
                 data = bytearray(data, "utf-8")
                 sendlen = 0

@@ -29,13 +29,13 @@ def handle_set(key, value, valuetype=VT_STRING, dbid=-1):
     db = databases.get_database(dbid, True)
 
     if not __validate_vt(valuetype):
-        return False, ERR_INVALIDVALUE, None
+        return False, ERR_INVALIDVALUETYPE, None
 
     if valuetype == VT_NUMBER or valuetype == VT_STRING:
         db[key] = value
     elif valuetype == VT_LIST:
         try:
-            values = map(lambda val: val.strip(), value.strip().split(","))
+            values = list(map(lambda val: val.strip(), value.strip().split(",")))
         except ValueError:
             return False, ERR_INVALIDVALUE, None
 
