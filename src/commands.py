@@ -164,8 +164,6 @@ def handle_auth(client, passwd):
     client.isauth = True
     client.passwd = passwd
 
-    databases.update_client(client)
-
     return True, SUCCESS, None
 
 @check_auth

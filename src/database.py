@@ -90,13 +90,4 @@ class Database:
 
         return self.__clients__[sockfd]
 
-    def update_client(self, client):
-        if client.sockconn.fileno() not in self.__clients__:
-            return None
-
-        del self.__clients__[client.sockconn.fileno()]
-        self.__clients__[client.sockconn.fileno()] = client
-
-        return client
-
 
