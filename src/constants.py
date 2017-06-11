@@ -8,6 +8,7 @@ COMMAND_DELETE = "delete"
 COMMAND_SELECT = "select"
 COMMAND_KEYS = "keys"
 COMMAND_AUTH = "auth"
+COMMAND_SAVE = "save"
 
 VT_NUMBER = "number"
 VT_STRING = "string"
@@ -19,8 +20,10 @@ ERR_INVALIDCMD = 2
 ERR_INVALIDKEY = 3
 ERR_INVALIDVALUE = 4
 ERR_INVALIDVALUETYPE = 5
-ERR_NOKEY = 6
+ERR_INVALIDPARAM = 6
+ERR_NOKEY = 8
 ERR_AUTHFAILED = 9
+ERR_SAVEFAILED = 10
 
 NOSQL_ERRMSGS = {
     SUCCESS: "success",
@@ -29,8 +32,10 @@ NOSQL_ERRMSGS = {
     ERR_INVALIDKEY: "Invalid key",
     ERR_INVALIDVALUE: "Invalid value",
     ERR_INVALIDVALUETYPE: "Invalid value type",
+    ERR_INVALIDPARAM: "Invalid params",
     ERR_NOKEY: "No such key",
     ERR_AUTHFAILED: "Auth failed",
+    ERR_SAVEFAILED: "Save failed",
 }
 
 

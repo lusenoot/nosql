@@ -6,7 +6,7 @@ import argparse
 import select
 import errno
 
-from commands import NOSQL_COMMANDS, init_database
+from commands import NOSQL_COMMANDS, init_database, add_client, delete_client, get_client
 from constants import *
 
 def __parse_args():
@@ -47,7 +47,7 @@ def process_client(client):
     data = ""
     while True:
         try:
-            d = client["conn"].recv(4096).decode("utf-8")
+            d = client.sockconn.recv(4096).decode("utf-8")
             if not d and not data:
                 return False
             data += d
@@ -62,22 +62,24 @@ def process_client(client):
     command, key, value, valuetype, dbid = parse_message(data)
 
     if command not in NOSQL_COMMANDS:
-        client["message"] = NOSQL_ERRMSGS[ERR_INVALIDCMD]
+        client.message = NOSQL_ERRMSGS[ERR_INVALIDCMD]
         return True
 
     print("command = [{0}, {1}, {2}, {3}, {4}]".format(command, key, value, valuetype, dbid))
 
     if command in (COMMAND_SET, COMMAND_LPUSH):
-        flag, code, response = NOSQL_COMMANDS[command]["func"](key, value, valuetype, dbid)
+        flag, code, response = NOSQL_COMMANDS[command]["func"](client, key, value, valuetype, dbid)
     elif command in (COMMAND_GET, COMMAND_LPOP, COMMAND_DELETE):
-        flag, code, response = NOSQL_COMMANDS[command]["func"](key, dbid)
+        flag, code, response = NOSQL_COMMANDS[command]["func"](client, key, dbid)
     elif command in (COMMAND_SELECT, COMMAND_KEYS):
-        flag, code, response = NOSQL_COMMANDS[command]["func"](dbid)
+        flag, code, response = NOSQL_COMMANDS[command]["func"](client, dbid)
     elif command in (COMMAND_AUTH):
-        flag, code, response = NOSQL_COMMANDS[command]["func"](key)
+        flag, code, response = NOSQL_COMMANDS[command]["func"](client, key)
+    elif command in (COMMAND_SAVE):
+        flag, code, response = NOSQL_COMMANDS[command]["func"](client)
 
-    client["message"] = NOSQL_ERRMSGS[code]
-    client["response"] = response
+    client.message = NOSQL_ERRMSGS[code]
+    client.response = response
 
     return True
 
@@ -97,7 +99,6 @@ def main():
     # init database
     init_database(args.enauth, args.authpwd)
 
-    clients = {}
     while 1:
         events = epfd.poll()
         if not events:
@@ -109,28 +110,24 @@ def main():
                 conn.setblocking(False)
 
                 epfd.register(conn.fileno(), select.EPOLLIN)
-                clients[conn.fileno()] = {}
-                clients[conn.fileno()]["conn"] = conn
-                clients[conn.fileno()]["message"] = ""
-                clients[conn.fileno()]["response"] = None
+                add_client(conn)
                 print("{} new connection from {}".format(time.strftime(("%Y/%m/%d %H:%M:%S INFO"), time.localtime()), addr))
             elif event & select.EPOLLIN:
-                client = clients[fd]
-                if process_client(client):
+                client = get_client(fd)
+                if client and process_client(client):
                     # continue to process send response
                     epfd.modify(fd, select.EPOLLOUT)
                 else:
                     epfd.unregister(fd)
-                    clients[fd]["conn"].close()
-                    del clients[fd]
+                    delete_client(fd)
             elif event & select.EPOLLOUT:
-                client = clients[fd]
-                data = "message: {0}\nresponse: {1}".format(client["message"], client["response"])
+                client = get_client(fd)
+                data = "message: {0}\nresponse: {1}".format(client.message, client.response)
 
                 data = bytearray(data, "utf-8")
                 sendlen = 0
                 while 1:
-                    sendlen += client["conn"].send(data[sendlen:])
+                    sendlen += client.sockconn.send(data[sendlen:])
                     if sendlen == len(data):
                         break
 
@@ -138,8 +135,7 @@ def main():
                 epfd.modify(fd, select.EPOLLIN)
             elif event & select.EPOLLHUP:
                 epfd.unregister(fd)
-                clients[fd]["conn"].close()
-                del clients[fd]
+                delete_client(fd)
 
 if __name__ == "__main__":
     main()

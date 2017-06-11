@@ -71,13 +71,15 @@ def process_args(args):
             print("params error, no password input!!!")
             return None
         data = "{0}; {1}".format(args.command, args.kvargs[0])
+    elif args.command in (COMMAND_SAVE):
+        data = "{0}".format(args.command)
     else:
         print("Invalid command")
 
     return data
 
 def send_command(args, data, socks=None):
-    isnew = True if socks else False
+    isnew = False if socks else True
 
     while True:
         if not socks:
@@ -166,6 +168,9 @@ def __parse_args():
 
     cmdline_parser = subparsers.add_parser("cmdline", help="Start cmdline mode")
     cmdline_parser.add_argument("kvargs", nargs="?", metavar="kvargs")
+
+    save_parser = subparsers.add_parser("save", help="Save db data to dbfile")
+    save_parser.add_argument("kvargs", nargs="?", metavar="kvargs")
 
     return parser.parse_args()
 
