@@ -4,6 +4,8 @@
 
 import os
 import pickle
+import zlib
+import sys
 
 class DBClient:
     def __init__(self, sockconn, passwd):
@@ -24,14 +26,28 @@ class Database:
 
         if os.path.exists(self.__dbfile__):
             if os.path.getsize(self.__dbfile__):
+                dbs = None
                 with open(self.__dbfile__, "rb") as f:
-                    self.__databases__ = pickle.load(f)
+                    dbs = pickle.load(f)
+
+                # verify cksum
+                cksum = zlib.crc32(pickle.dumps(dbs["db"]))
+                if cksum != dbs["cksum"]:
+                    print("Database is modified by user!!!!")
+                    sys.exit(1)
+
+                self.__databases__ = dbs["db"]
 
     def save(self):
         if self.__databases__:
             try:
+                dbs = {
+                        "db": self.__databases__,
+                }
+                cksum = zlib.crc32(pickle.dumps(self.__databases__))
+                dbs["cksum"] = cksum
                 with open(self.__dbfile__, "wb") as f:
-                    pickle.dump(self.__databases__, f)
+                    pickle.dump(dbs, f)
             except Exception as e:
                 return False
 
